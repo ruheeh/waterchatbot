@@ -1,0 +1,222 @@
+"""
+Water Quality Data Chatbot (Free Version - No AI Dependency)
+A simple chatbot that answers questions about water monitoring data
+using pattern matching. Runs completely offline with no API costs.
+"""
+
+import streamlit as st
+import pandas as pd
+import os
+from datetime import datetime
+from data_manager import DataManager
+from query_engine_free import QueryEngine
+
+# Page config
+st.set_page_config(
+    page_title="Water Quality Chatbot",
+    page_icon="💧",
+    layout="wide"
+)
+
+# Custom CSS
+st.markdown("""
+<style>
+    .stChatMessage {
+        padding: 1rem;
+        border-radius: 0.5rem;
+    }
+    .example-btn {
+        margin: 0.2rem;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Initialize session state
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+if "data_manager" not in st.session_state:
+    st.session_state.data_manager = None
+
+if "query_engine" not in st.session_state:
+    st.session_state.query_engine = None
+
+# Sidebar
+with st.sidebar:
+    st.title("💧 Water Quality Chatbot")
+    st.markdown("*Free version - runs offline*")
+    st.markdown("---")
+    
+    # File upload
+    st.markdown("### 📂 Data Source")
+    
+    # Option 1: Use default file
+    default_file = os.path.join(os.path.dirname(__file__), "data", "water_data.xlsx")
+    
+    uploaded_file = st.file_uploader(
+        "Upload Excel file",
+        type=["xlsx", "xls"],
+        help="Upload your water quality monitoring data"
+    )
+    
+    # Load data button
+    if st.button("🔄 Load/Reload Data", type="primary"):
+        try:
+            if uploaded_file:
+                # Save uploaded file
+                os.makedirs("data", exist_ok=True)
+                save_path = os.path.join("data", "water_data.xlsx")
+                with open(save_path, "wb") as f:
+                    f.write(uploaded_file.getvalue())
+                data_path = save_path
+                # Force fresh load by clearing old instances
+                st.session_state.data_manager = None
+                st.session_state.query_engine = None
+            elif os.path.exists(default_file):
+                data_path = default_file
+            else:
+                st.error("Please upload an Excel file")
+                data_path = None
+            
+            if data_path:
+                # Always create fresh DataManager (clears metadata cache too)
+                dm = DataManager(data_path)
+                # Clear old metadata to force refresh
+                dm.sites_registry = []
+                dm.query_examples = []
+                dm.column_metadata = []
+                dm.initialize_chroma()
+                st.session_state.data_manager = dm
+                st.session_state.query_engine = QueryEngine(dm)
+                st.success(f"✅ Loaded {len(dm.df)} samples from FieldData sheet")
+        except Exception as e:
+            st.error(f"Error loading data: {e}")
+    
+    st.markdown("---")
+    
+    # Data overview
+    if st.session_state.data_manager is not None:
+        dm = st.session_state.data_manager
+        summary = dm.get_data_summary()
+        
+        st.markdown("### 📊 Data Overview")
+        st.metric("Total Samples", summary.get('total_samples', 0))
+        st.metric("Sites Monitored", summary.get('total_sites', 0))
+        st.metric("Parameters", summary.get('columns', 0))
+        
+        # Show date range
+        if 'sample_date' in dm.df.columns:
+            st.markdown(f"**Date Range:**")
+            st.markdown(f"{dm.df['sample_date'].min().strftime('%Y-%m-%d')} to {dm.df['sample_date'].max().strftime('%Y-%m-%d')}")
+    
+    st.markdown("---")
+    st.markdown("### 💡 Example Questions")
+    st.markdown("""
+    - Coldest January water temp 1981-1995
+    - Average dissolved oxygen by year
+    - Show data for site 2
+    - Compare summer vs winter temperature
+    - How many samples per site?
+    - Correlation between temp and oxygen
+    - Trend of pH over time
+    - Summary statistics for turbidity
+    """)
+    
+    st.markdown("---")
+    st.markdown("### ℹ️ About")
+    st.markdown("""
+    This chatbot uses **pattern matching** to understand your questions - no AI/API required!
+    
+    It recognizes:
+    - Parameter names (temperature, pH, ecoli, etc.)
+    - Time periods (months, years, seasons)
+    - Aggregations (average, maximum, minimum)
+    - Comparisons and trends
+    """)
+
+# Main content
+st.title("💧 Water Quality Data Assistant")
+st.markdown("Ask questions about your water monitoring data in natural language. **Free & offline!**")
+
+# Quick example buttons
+if st.session_state.query_engine is not None:
+    st.markdown("**Try these examples:**")
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        if st.button("📊 Yearly temp trend"):
+            st.session_state.messages.append({"role": "user", "content": "temperature trend over time"})
+            st.rerun()
+    with col2:
+        if st.button("🦠 Highest E. coli"):
+            st.session_state.messages.append({"role": "user", "content": "highest ecoli reading"})
+            st.rerun()
+    with col3:
+        if st.button("🌡️ Summer vs Winter"):
+            st.session_state.messages.append({"role": "user", "content": "compare summer vs winter temperature"})
+            st.rerun()
+    with col4:
+        if st.button("📈 Site counts"):
+            st.session_state.messages.append({"role": "user", "content": "how many samples per site"})
+            st.rerun()
+
+st.markdown("---")
+
+# Chat interface
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+        if "data" in message and message["data"] is not None:
+            st.dataframe(message["data"], use_container_width=True)
+
+# Chat input
+if prompt := st.chat_input("Ask a question about your water data..."):
+    # Check if system is ready
+    if st.session_state.data_manager is None:
+        st.warning("⚠️ Please load data first using the sidebar")
+    else:
+        # Add user message
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        
+        # Generate response
+        with st.chat_message("assistant"):
+            try:
+                response, result_df = st.session_state.query_engine.query(prompt)
+                st.markdown(response)
+                
+                if result_df is not None and len(result_df) > 0:
+                    st.dataframe(result_df, use_container_width=True)
+                
+                # Save to history
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": response,
+                    "data": result_df
+                })
+            except Exception as e:
+                error_msg = f"Error processing query: {str(e)}"
+                st.error(error_msg)
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": error_msg,
+                    "data": None
+                })
+
+# Process any pending messages from button clicks
+if st.session_state.messages and st.session_state.query_engine:
+    last_msg = st.session_state.messages[-1]
+    if last_msg["role"] == "user" and len(st.session_state.messages) >= 1:
+        # Check if we need to generate a response
+        if len(st.session_state.messages) == 1 or st.session_state.messages[-2]["role"] != "user":
+            pass  # Response will be generated on next rerun
+
+# Footer
+st.markdown("---")
+col1, col2, col3 = st.columns(3)
+with col2:
+    st.markdown(
+        "<p style='text-align: center; color: gray;'>Built for watershed monitoring research • Free & Open Source</p>",
+        unsafe_allow_html=True
+    )

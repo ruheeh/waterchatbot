@@ -1,11 +1,13 @@
 """
 Data Manager Module
-Handles loading Excel data from FieldData sheet, managing site registry and query examples.
+Handles loading data from Excel (FieldData sheet) or NetCDF format,
+managing site registry and query examples.
 Uses simple in-memory storage with JSON persistence.
 """
 
 import os
 import pandas as pd
+import numpy as np
 import json
 from datetime import datetime
 from typing import Optional, List, Dict, Any
@@ -13,54 +15,150 @@ from difflib import SequenceMatcher
 
 
 class DataManager:
-    """Manages water quality data from Excel and site metadata."""
+    """Manages water quality data from Excel or NetCDF and site metadata."""
     
-    SHEET_NAME = "FieldData"  # Only use this sheet
+    SHEET_NAME = "FieldData"  # Only use this sheet for Excel
     
-    def __init__(self, excel_path: str, metadata_path: str = "./metadata"):
+    def __init__(self, file_path: str, metadata_path: str = "./metadata"):
         """
         Initialize the data manager.
         
         Args:
-            excel_path: Path to the Excel file with water data
+            file_path: Path to Excel (.xlsx) or NetCDF (.nc) file
             metadata_path: Path for metadata storage
         """
-        self.excel_path = excel_path
+        self.file_path = file_path
         self.metadata_path = metadata_path
         self.df = None
         self.last_modified = None
+        self.file_type = None  # 'excel' or 'netcdf'
         
         # In-memory storage
         self.sites_registry: List[Dict] = []
         self.query_examples: List[Dict] = []
         self.column_metadata: List[Dict] = []
         
-        # Load data immediately
-        self._load_excel()
+        # Detect file type and load data
+        self._detect_file_type()
+        self._load_data()
     
-    def _load_excel(self) -> pd.DataFrame:
-        """Load or reload Excel data if file has changed."""
-        current_modified = os.path.getmtime(self.excel_path)
+    def _detect_file_type(self):
+        """Detect whether file is Excel or NetCDF."""
+        ext = os.path.splitext(self.file_path)[1].lower()
+        
+        if ext in ['.xlsx', '.xls']:
+            self.file_type = 'excel'
+        elif ext in ['.nc', '.nc4', '.netcdf']:
+            self.file_type = 'netcdf'
+        else:
+            raise ValueError(f"Unsupported file format: {ext}. Use .xlsx or .nc")
+        
+        print(f"[DataManager] Detected file type: {self.file_type}")
+    
+    def _load_data(self) -> pd.DataFrame:
+        """Load data from Excel or NetCDF."""
+        current_modified = os.path.getmtime(self.file_path)
         
         if self.df is None or current_modified != self.last_modified:
-            self.df = pd.read_excel(self.excel_path, sheet_name=self.SHEET_NAME)
+            if self.file_type == 'excel':
+                self.df = self._load_excel()
+            elif self.file_type == 'netcdf':
+                self.df = self._load_netcdf()
+            
             self.last_modified = current_modified
-            
-            # Parse dates
-            if 'sample_date' in self.df.columns:
-                self.df['sample_date'] = pd.to_datetime(self.df['sample_date'])
-            
-            # Convert site to string to avoid mixed type issues
-            if 'site' in self.df.columns:
-                self.df['site'] = self.df['site'].astype(str)
-            
-            print(f"[DataManager] Loaded {len(self.df)} rows from '{self.SHEET_NAME}' sheet")
         
         return self.df
     
+    def _load_excel(self) -> pd.DataFrame:
+        """Load data from Excel FieldData sheet."""
+        df = pd.read_excel(self.file_path, sheet_name=self.SHEET_NAME)
+        
+        # Parse dates
+        if 'sample_date' in df.columns:
+            df['sample_date'] = pd.to_datetime(df['sample_date'])
+        
+        # Convert site to string to avoid mixed type issues
+        if 'site' in df.columns:
+            df['site'] = df['site'].astype(str)
+        
+        print(f"[DataManager] Loaded {len(df)} rows from Excel '{self.SHEET_NAME}' sheet")
+        return df
+    
+    def _load_netcdf(self) -> pd.DataFrame:
+        """Load data from NetCDF file."""
+        try:
+            import netCDF4 as nc
+        except ImportError:
+            raise ImportError(
+                "netCDF4 package required to read NetCDF files.\n"
+                "Install with: python3 -m pip install netCDF4"
+            )
+        
+        with nc.Dataset(self.file_path, 'r') as ds:
+            # Get dimensions
+            times = ds.variables['time'][:]
+            time_units = ds.variables['time'].units
+            
+            # Convert time to datetime
+            time_dates = nc.num2date(times, time_units)
+            time_dates = pd.to_datetime([t.strftime('%Y-%m-%d %H:%M:%S') for t in time_dates])
+            
+            # Get site names
+            site_var = ds.variables['site'][:]
+            sites = []
+            for i in range(site_var.shape[0]):
+                site_str = nc.chartostring(site_var[i]).item()
+                sites.append(site_str.strip())
+            
+            # Build rows: one row per (time, site) combination with data
+            rows = []
+            
+            # Get all data variables (exclude dimensions and coordinates)
+            skip_vars = {'time', 'site', 'season'}
+            data_vars = [v for v in ds.variables.keys() if v not in skip_vars]
+            
+            for t_idx, sample_date in enumerate(time_dates):
+                for s_idx, site in enumerate(sites):
+                    row = {
+                        'sample_date': sample_date,
+                        'site': site,
+                        'year': sample_date.year,
+                        'month': sample_date.month,
+                    }
+                    
+                    # Add season if available
+                    if 'season' in ds.variables:
+                        season_var = ds.variables['season'][t_idx]
+                        row['season'] = nc.chartostring(season_var).item().strip()
+                    
+                    # Check if this (time, site) has any data
+                    has_data = False
+                    for var_name in data_vars:
+                        var = ds.variables[var_name]
+                        if var.dimensions == ('time', 'site'):
+                            val = var[t_idx, s_idx]
+                            if not np.isnan(val) and val is not np.ma.masked:
+                                has_data = True
+                                # Convert variable name back (underscores to dots)
+                                col_name = var_name.replace('_', '.', 1) if var_name.count('_') > 0 else var_name
+                                row[col_name] = float(val)
+                    
+                    # Only add row if it has at least some data
+                    if has_data:
+                        rows.append(row)
+            
+            df = pd.DataFrame(rows)
+            
+            # Convert site to string
+            if 'site' in df.columns:
+                df['site'] = df['site'].astype(str)
+            
+            print(f"[DataManager] Loaded {len(df)} rows from NetCDF file")
+            return df
+    
     def get_data(self) -> pd.DataFrame:
         """Get current dataframe, reloading if file changed."""
-        return self._load_excel()
+        return self._load_data()
     
     def _similarity(self, query: str, text: str) -> float:
         """Calculate string similarity for simple search."""

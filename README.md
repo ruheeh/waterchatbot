@@ -2,12 +2,69 @@
 
 A simple chatbot for querying water monitoring data using natural language. **Runs completely offline with no API costs!**
 
+## How It Works
+
+```
+                        ┌─────────────────────┐
+                        │   Upload Data File  │
+                        └──────────┬──────────┘
+                                   │
+                                   ▼
+                          ┌───────────────┐
+                          │ Check Format  │
+                          └───────┬───────┘
+                                  │
+                    ┌─────────────┴─────────────┐
+                    │                           │
+                    ▼                           ▼
+            ┌──────────────┐            ┌──────────────┐
+            │ Excel (.xlsx)│            │ NetCDF (.nc) │
+            │  FieldData   │            │              │
+            │    sheet     │            │              │
+            └──────┬───────┘            └──────┬───────┘
+                   │                           │
+                   └─────────────┬─────────────┘
+                                 │
+                                 ▼
+                      ┌─────────────────────┐
+                      │  Pandas DataFrame   │
+                      │   (unified format)  │
+                      └──────────┬──────────┘
+                                 │
+            ┌────────────────────┼────────────────────┐
+            │                    │                    │
+            ▼                    ▼                    ▼
+    ┌───────────────┐   ┌───────────────┐   ┌───────────────┐
+    │  Ask Question │   │ View Summary  │   │Export NetCDF  │
+    └───────┬───────┘   └───────────────┘   └───────────────┘
+            │
+            ▼
+    ┌───────────────┐
+    │Extract Keywords│
+    │ (temperature,  │
+    │  january, avg) │
+    └───────┬───────┘
+            │
+            ▼
+    ┌───────────────┐
+    │ Build Pandas  │
+    │    Query      │
+    └───────┬───────┘
+            │
+            ▼
+    ┌───────────────┐
+    │  Execute &    │
+    │ Show Results  │
+    └───────────────┘
+```
+
 ## Features
 
 - **100% Free**: No paid AI/API subscriptions needed
 - **Offline**: Works without internet after setup
 - **Pattern Matching**: Understands natural language questions about your data
 - **Water Quality Focused**: Knows about DO, pH, E. coli, turbidity, etc.
+- **Dual Format**: Reads both Excel (.xlsx) and NetCDF (.nc) files
 - **NetCDF Export**: Export to CF-compliant NetCDF for GIS/scientific tools
 
 ## Quick Start
@@ -66,7 +123,11 @@ The chatbot recognizes these water quality terms:
 
 ## Data Format
 
-The chatbot reads the **FieldData** sheet from your Excel file. Expected columns:
+The chatbot reads **either**:
+- **Excel (.xlsx)** - reads the **FieldData** sheet only
+- **NetCDF (.nc)** - reads files exported by this app or similar structure
+
+Expected columns:
 
 - `sample_date` - Date of sample
 - `site` - Site identifier

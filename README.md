@@ -8,6 +8,7 @@ A simple chatbot for querying water monitoring data using natural language. **Ru
 - **Offline**: Works without internet after setup
 - **Pattern Matching**: Understands natural language questions about your data
 - **Water Quality Focused**: Knows about DO, pH, E. coli, turbidity, etc.
+- **NetCDF Export**: Export to CF-compliant NetCDF for GIS/scientific tools
 
 ## Quick Start
 
@@ -21,7 +22,7 @@ python3 -m pip install -r requirements.txt
 ### 2. Run the App
 
 ```bash
-streamlit run app.py
+python3 -m streamlit run app.py
 ```
 
 The app will open in your browser at `http://localhost:8501`
@@ -84,8 +85,9 @@ waterchatbotproject/
 ├── app.py                 # Streamlit frontend
 ├── data_manager.py        # Excel data handling
 ├── query_engine_free.py   # Pattern matching engine
+├── netcdf_exporter.py     # NetCDF export module
 ├── manage.py              # CLI for data updates
-├── requirements.txt       # Dependencies (just 3!)
+├── requirements.txt       # Dependencies
 └── data/
     └── water_data.xlsx    # Your data file
 ```
@@ -94,6 +96,30 @@ waterchatbotproject/
 
 ```bash
 python3 manage.py add new_monthly_data.xlsx --month 2025-02
+```
+
+## NetCDF Export
+
+The chatbot can export your data to NetCDF format (CF-compliant) for use with GIS and scientific tools.
+
+### To use NetCDF export:
+1. Load your data in the app
+2. Find "Export to NetCDF" in the sidebar
+3. Enter title and institution
+4. Click "Export to NetCDF"
+
+The exported file will be saved as `data/water_quality_data.nc`
+
+### NetCDF structure:
+```
+Dimensions: time × site
+Variables: water_temp, dissolved_oxygen, ph, ecoli, etc.
+Attributes: CF-1.8 compliant metadata with units
+```
+
+### Install NetCDF support:
+```bash
+python3 -m pip install netCDF4
 ```
 
 ## How It Works
@@ -124,6 +150,8 @@ This means:
 **Streamlit not found**
 ```bash
 python3 -m pip install streamlit
+# Then run with:
+python3 -m streamlit run app.py
 ```
 
 ## License

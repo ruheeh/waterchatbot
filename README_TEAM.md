@@ -20,9 +20,19 @@
 
 ### Step 2: Run the App
 
-**Mac:** Double-click `run_app.sh`
+**Mac:** Double-click `run_app_mac.command`
 
-**Windows:** Double-click `run_app.bat`
+**Windows:** Double-click `run_app_windows.bat`
+
+#### ⚠️ Mac Security Warning (First Time Only)
+
+If Mac shows "cannot be opened because Apple cannot verify":
+
+1. **Right-click** the file
+2. Click **Open**
+3. Click **Open** again in the dialog
+
+After this, double-click works normally.
 
 ### Step 3: Enter Your Data File Path (First Run Only)
 

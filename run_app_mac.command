@@ -1,12 +1,21 @@
 #!/bin/bash
 # ================================================
-# 💧 Water Quality Chatbot - Mac/Linux Setup & Run
+# 💧 Water Quality Chatbot - Mac Setup & Run
 # ================================================
 # Just double-click this file to run!
 # First run will install everything automatically.
+#
+# ⚠️ FIRST TIME SECURITY NOTE:
+# If Mac shows "cannot be opened" warning:
+#   1. Right-click this file → Open → Open
+#   OR
+#   2. System Settings → Privacy & Security → Open Anyway
 # ================================================
 
 cd "$(dirname "$0")"
+
+# Try to remove quarantine flag (helps future runs)
+xattr -d com.apple.quarantine "$0" 2>/dev/null
 
 echo ""
 echo "💧 =================================="

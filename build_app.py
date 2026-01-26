@@ -31,8 +31,8 @@ def create_distribution():
         "query_engine_free.py",
         "netcdf_exporter.py",
         "requirements.txt",
-        "run_app.sh",
-        "run_app.bat",
+        "run_app_mac.command",
+        "run_app_windows.bat",
     ]
     
     for f in files_to_copy:
@@ -46,9 +46,16 @@ def create_distribution():
         print(f"  ✅ Copied README_TEAM.md → README.md")
     
     # Make shell script executable
-    sh_path = os.path.join(dist_folder, "run_app.sh")
-    if os.path.exists(sh_path):
-        os.chmod(sh_path, 0o755)
+    cmd_path = os.path.join(dist_folder, "run_app_mac.command")
+    if os.path.exists(cmd_path):
+        os.chmod(cmd_path, 0o755)
+        # Remove quarantine attribute if possible (Mac)
+        try:
+            import subprocess
+            subprocess.run(["xattr", "-d", "com.apple.quarantine", cmd_path], 
+                         capture_output=True)
+        except:
+            pass
     
     # Summary
     print("\n" + "=" * 50)
@@ -69,9 +76,11 @@ def create_distribution():
 
 2. Team members just:
    - Download/copy the folder
-   - Double-click run_app.sh (Mac) or run_app.bat (Windows)
+   - Double-click run_app_mac.command (Mac) or run_app_windows.bat (Windows)
    - First run auto-installs everything!
    - First run prompts for Excel file path!
+
+⚠️  Mac users: First time, right-click → Open → Open (security warning)
 
 That's it! No manual setup needed.
 """)

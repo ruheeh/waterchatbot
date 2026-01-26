@@ -33,7 +33,29 @@ python3 -m pip install -r requirements.txt
 python3 -m streamlit run app.py
 ```
 
-Or simply double-click `run_app.sh` (Mac) or `run_app.bat` (Windows) - it does everything automatically!
+Or simply double-click `run_app_mac.command` (Mac) or `run_app_windows.bat` (Windows) - it does everything automatically!
+
+### Mac Security Note (First Time)
+
+When you first run `run_app_mac.command`, Mac may block it with a security warning.
+
+**Fix Option 1 - Right-click method:**
+1. Right-click `run_app_mac.command`
+2. Click **Open**
+3. Click **Open** again in the warning dialog
+
+**Fix Option 2 - System Settings:**
+1. Open **System Settings** → **Privacy & Security**
+2. Scroll down to see the blocked file
+3. Click **Open Anyway**
+
+**Fix Option 3 - Terminal (for admins sharing with team):**
+```bash
+# Remove quarantine flag before sharing
+xattr -d com.apple.quarantine run_app_mac.command
+```
+
+After doing any of these once, double-click works normally.
 
 ---
 
@@ -167,20 +189,20 @@ This way, when the Excel file is updated, everyone sees the new data!
 
 ### Mac
 
-- Double-click `run_app.sh` to run
-- If it won't open: Right-click → Open → Open
-- Or run in Terminal: `./run_app.sh`
+- Double-click `run_app_mac.command` to run
+- **First time:** Right-click → Open → Open (security warning)
+- Or run in Terminal: `./run_app_mac.command`
 
 ### Windows
 
-- Double-click `run_app.bat` to run
+- Double-click `run_app_windows.bat` to run
 - Use double backslashes in paths: `C:\\Users\\name\\file.xlsx`
 - Or forward slashes work too: `C:/Users/name/file.xlsx`
 
 ### Linux
 
-- Same as Mac: `./run_app.sh`
-- May need: `chmod +x run_app.sh` first
+- Run in Terminal: `bash run_app_mac.command`
+- May need: `chmod +x run_app_mac.command` first
 
 ---
 

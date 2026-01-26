@@ -33,12 +33,15 @@ A simple chatbot for querying water monitoring data using natural language. **Ru
 
 ### Option 1: Double-Click (Easiest)
 
-**Mac:** Double-click `run_app.sh`  
-**Windows:** Double-click `run_app.bat`
+**Mac:** Double-click `run_app_mac.command`  
+**Windows:** Double-click `run_app_windows.bat`
+
+> ⚠️ **Mac First-Time Security Warning:** If Mac says "cannot be opened", right-click the file → **Open** → **Open**. See [Mac Security Note](#-mac-security-note) below.
 
 The script automatically:
-- ✅ Installs dependencies
+- ✅ Installs dependencies (first run)
 - ✅ Prompts for your Excel file path (first run)
+- ✅ Creates config.json
 - ✅ Opens the app in your browser
 
 ### Option 2: Manual
@@ -156,8 +159,8 @@ Expected columns: `sample_date`, `site`, `year`, `month`, `season`, `water_temp.
 
 ```
 waterchatbotproject/
-├── run_app.sh             # 🍎 Mac: Double-click to run
-├── run_app.bat            # 🪟 Windows: Double-click to run
+├── run_app_mac.command    # 🍎 Mac: Double-click to run
+├── run_app_windows.bat    # 🪟 Windows: Double-click to run
 ├── config.json            # ⚙️ Data file path (auto-created)
 ├── app.py                 # Streamlit frontend
 ├── data_manager.py        # Excel/NetCDF data loading
@@ -262,6 +265,30 @@ python3 manage.py add new_monthly_data.xlsx --month 2025-02
 ---
 
 ## ❓ Troubleshooting
+
+### 🍎 Mac Security Note
+
+When you first double-click `run_app_mac.command`, Mac may show:
+
+> "run_app_mac.command" cannot be opened because Apple cannot verify it is free from malware.
+
+**To fix (do once):**
+
+1. **Right-click** the file → **Open** → **Open**
+
+**OR**
+
+1. Go to **System Settings** → **Privacy & Security**
+2. Scroll down and click **Open Anyway**
+
+**OR (Terminal method):**
+```bash
+xattr -d com.apple.quarantine run_app_mac.command
+```
+
+After doing this once, double-click will work normally.
+
+---
 
 | Problem | Solution |
 |---------|----------|

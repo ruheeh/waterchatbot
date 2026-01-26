@@ -7,9 +7,34 @@ using pattern matching. Runs completely offline with no API costs.
 import streamlit as st
 import pandas as pd
 import os
+import json
 from datetime import datetime
 from data_manager import DataManager
 from query_engine_free import QueryEngine
+
+
+def load_config():
+    """Load configuration from config.json"""
+    config_path = os.path.join(os.path.dirname(__file__), "config.json")
+    default_config = {
+        "data_file": "./data/water_data.xlsx",
+        "export_folder": "./data"
+    }
+    
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, 'r') as f:
+                config = json.load(f)
+                # Merge with defaults
+                return {**default_config, **config}
+        except Exception as e:
+            print(f"Error loading config: {e}")
+    
+    return default_config
+
+
+# Load config
+config = load_config()
 
 # Page config
 st.set_page_config(
@@ -50,8 +75,13 @@ with st.sidebar:
     # File upload
     st.markdown("### 📂 Data Source")
     
-    # Option 1: Use default file
-    default_file = os.path.join(os.path.dirname(__file__), "data", "water_data.xlsx")
+    # Get default file from config
+    default_file = config.get("data_file", "./data/water_data.xlsx")
+    if not os.path.isabs(default_file):
+        default_file = os.path.join(os.path.dirname(__file__), default_file)
+    
+    # Show current configured path
+    st.caption(f"📁 Default: `{config.get('data_file', './data/water_data.xlsx')}`")
     
     uploaded_file = st.file_uploader(
         "Upload data file",

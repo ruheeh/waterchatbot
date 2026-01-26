@@ -54,18 +54,23 @@ with st.sidebar:
     default_file = os.path.join(os.path.dirname(__file__), "data", "water_data.xlsx")
     
     uploaded_file = st.file_uploader(
-        "Upload Excel file",
-        type=["xlsx", "xls"],
-        help="Upload your water quality monitoring data"
+        "Upload data file",
+        type=["xlsx", "xls", "nc"],
+        help="Upload Excel (.xlsx) or NetCDF (.nc) water quality data"
     )
     
     # Load data button
     if st.button("🔄 Load/Reload Data", type="primary"):
         try:
             if uploaded_file:
-                # Save uploaded file
+                # Save uploaded file with correct extension
                 os.makedirs("data", exist_ok=True)
-                save_path = os.path.join("data", "water_data.xlsx")
+                file_ext = os.path.splitext(uploaded_file.name)[1].lower()
+                if file_ext in ['.nc', '.nc4']:
+                    save_path = os.path.join("data", "water_data.nc")
+                else:
+                    save_path = os.path.join("data", "water_data.xlsx")
+                
                 with open(save_path, "wb") as f:
                     f.write(uploaded_file.getvalue())
                 data_path = save_path
@@ -74,8 +79,10 @@ with st.sidebar:
                 st.session_state.query_engine = None
             elif os.path.exists(default_file):
                 data_path = default_file
+            elif os.path.exists(default_file.replace('.xlsx', '.nc')):
+                data_path = default_file.replace('.xlsx', '.nc')
             else:
-                st.error("Please upload an Excel file")
+                st.error("Please upload a data file (Excel or NetCDF)")
                 data_path = None
             
             if data_path:
@@ -88,7 +95,8 @@ with st.sidebar:
                 dm.initialize_chroma()
                 st.session_state.data_manager = dm
                 st.session_state.query_engine = QueryEngine(dm)
-                st.success(f"✅ Loaded {len(dm.df)} samples from FieldData sheet")
+                file_type = "NetCDF" if data_path.endswith('.nc') else "Excel"
+                st.success(f"✅ Loaded {len(dm.df)} samples from {file_type}")
         except Exception as e:
             st.error(f"Error loading data: {e}")
     

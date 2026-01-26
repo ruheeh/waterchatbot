@@ -133,6 +133,41 @@ with st.sidebar:
     - Aggregations (average, maximum, minimum)
     - Comparisons and trends
     """)
+    
+    # NetCDF Export Section
+    st.markdown("---")
+    st.markdown("### 📦 Export to NetCDF")
+    
+    if st.session_state.data_manager is not None:
+        try:
+            from netcdf_exporter import NetCDFExporter, check_netcdf_available
+            
+            if check_netcdf_available():
+                export_title = st.text_input("Dataset Title", value="Water Quality Monitoring Data")
+                export_institution = st.text_input("Institution", value="Bard College")
+                
+                if st.button("📥 Export to NetCDF"):
+                    try:
+                        exporter = NetCDFExporter(st.session_state.data_manager)
+                        output_path = os.path.join("data", "water_quality_data.nc")
+                        exporter.export(
+                            output_path=output_path,
+                            title=export_title,
+                            institution=export_institution
+                        )
+                        st.success(f"✅ Exported to {output_path}")
+                        
+                        # Show summary
+                        summary = exporter.get_export_summary()
+                        st.markdown(f"**Exported:** {summary['num_samples']} samples, {summary['num_sites']} sites, {len(summary['variables'])} variables")
+                    except Exception as e:
+                        st.error(f"Export error: {e}")
+            else:
+                st.warning("NetCDF4 not installed. Run:\n`python3 -m pip install netCDF4`")
+        except ImportError:
+            st.warning("NetCDF export module not found.")
+    else:
+        st.info("Load data first to enable export")
 
 # Main content
 st.title("💧 Water Quality Data Assistant")

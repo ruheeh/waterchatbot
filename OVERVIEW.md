@@ -32,7 +32,7 @@ The app also lets you export your data to NetCDF format, which is commonly used 
 
 ## Technical Background
 
-The app is built with Python, using Streamlit for the web interface and Pandas for data processing. It uses pattern matching (not AI) to interpret questions, which means it works offline and costs nothing to run.
+The app is built with **Python**, using **Streamlit** for the web interface and **Pandas** for data processing. It uses pattern matching (**not AI**) to interpret questions, which means it works offline and costs nothing to run.
 
 ---
 

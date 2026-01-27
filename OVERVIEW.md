@@ -10,7 +10,7 @@ Researchers, field technicians, and team members who work with water quality dat
 
 ## How does it work?
 
-1. **You upload your Excel file** (It also can accept NetCDF file format also) containing water quality measurements (temperature, dissolved oxygen, bacteria levels, pH, etc.)
+1. **You upload your Excel file** (It also can accept NetCDF file format) containing water quality measurements (temperature, dissolved oxygen, bacteria levels, pH, etc.)
 
 2. **You ask questions in everyday language** — for example:
    - "Show me all data from site 2"

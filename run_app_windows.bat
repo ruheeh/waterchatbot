@@ -3,7 +3,7 @@ REM ================================================
 REM 💧 Water Quality Chatbot - Windows Setup & Run
 REM ================================================
 REM Just double-click this file to run!
-REM First run will install everything automatically.
+REM First run will install packages automatically.
 REM ================================================
 
 cd /d "%~dp0"
@@ -45,31 +45,6 @@ if errorlevel 1 (
 ) else (
     echo    ✅ All packages ready
 )
-
-REM Check if config.json exists, if not create it
-if not exist "config.json" (
-    echo.
-    echo ⚙️  First time setup - need to configure data file path
-    echo.
-    echo Where is your water quality Excel file?
-    echo Example: C:\Users\YourName\Documents\water_data.xlsx
-    echo.
-    set /p datapath="Enter full path to Excel file: "
-    
-    REM Create config.json
-    echo { > config.json
-    echo   "data_file": "%datapath%", >> config.json
-    echo   "export_folder": "./data" >> config.json
-    echo } >> config.json
-    
-    echo.
-    echo ✅ Configuration saved to config.json
-    echo    You can edit this file anytime to change the path.
-)
-
-REM Show current config
-echo.
-echo 📁 Current configuration saved in config.json
 
 REM Create data folder if needed
 if not exist "data" mkdir data

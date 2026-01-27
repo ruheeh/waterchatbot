@@ -66,6 +66,40 @@ if "data_manager" not in st.session_state:
 if "query_engine" not in st.session_state:
     st.session_state.query_engine = None
 
+if "auto_loaded" not in st.session_state:
+    st.session_state.auto_loaded = False
+
+
+def load_data_from_config():
+    """Auto-load data from config.json on startup."""
+    data_file = config.get("data_file", "")
+    
+    # Resolve relative paths
+    if data_file and not os.path.isabs(data_file):
+        data_file = os.path.join(os.path.dirname(__file__), data_file)
+    
+    if data_file and os.path.exists(data_file):
+        try:
+            dm = DataManager(data_file)
+            dm.sites_registry = []
+            dm.query_examples = []
+            dm.column_metadata = []
+            dm.initialize_chroma()
+            st.session_state.data_manager = dm
+            st.session_state.query_engine = QueryEngine(dm)
+            return True, len(dm.df)
+        except Exception as e:
+            return False, str(e)
+    return False, "File not found"
+
+
+# Auto-load on first run
+if not st.session_state.auto_loaded and st.session_state.data_manager is None:
+    success, result = load_data_from_config()
+    st.session_state.auto_loaded = True
+    if success:
+        st.toast(f"✅ Loaded {result} samples from config")
+
 # Sidebar
 with st.sidebar:
     st.title("💧 Water Quality Chatbot")
@@ -76,57 +110,76 @@ with st.sidebar:
     st.markdown("### 📂 Data Source")
     
     # Get default file from config
-    default_file = config.get("data_file", "./data/water_data.xlsx")
-    if not os.path.isabs(default_file):
+    default_file = config.get("data_file", "")
+    if default_file and not os.path.isabs(default_file):
         default_file = os.path.join(os.path.dirname(__file__), default_file)
     
-    # Show current configured path
-    st.caption(f"📁 Default: `{config.get('data_file', './data/water_data.xlsx')}`")
+    # Show current status
+    if st.session_state.data_manager is not None:
+        st.success(f"✅ Data loaded: {len(st.session_state.data_manager.df)} samples")
+        st.caption(f"📁 `{config.get('data_file', 'N/A')}`")
+    elif config.get("data_file"):
+        st.warning(f"⚠️ File not found: {config.get('data_file')}")
+    else:
+        st.info("👆 Upload your Excel or NetCDF file to get started")
     
+    # File uploader
     uploaded_file = st.file_uploader(
         "Upload data file",
         type=["xlsx", "xls", "nc"],
         help="Upload Excel (.xlsx) or NetCDF (.nc) water quality data"
     )
     
-    # Load data button
-    if st.button("🔄 Load/Reload Data", type="primary"):
+    # Handle file upload - save to data folder and update config
+    if uploaded_file:
+        os.makedirs("data", exist_ok=True)
+        file_ext = os.path.splitext(uploaded_file.name)[1].lower()
+        save_filename = f"water_data{file_ext}"
+        save_path = os.path.join("data", save_filename)
+        
+        with open(save_path, "wb") as f:
+            f.write(uploaded_file.getvalue())
+        
+        # Update config.json
+        config["data_file"] = f"./data/{save_filename}"
+        config_path = os.path.join(os.path.dirname(__file__), "config.json")
+        with open(config_path, "w") as f:
+            json.dump(config, f, indent=2)
+        
+        # Load the data
         try:
-            if uploaded_file:
-                # Save uploaded file with correct extension
-                os.makedirs("data", exist_ok=True)
-                file_ext = os.path.splitext(uploaded_file.name)[1].lower()
-                if file_ext in ['.nc', '.nc4']:
-                    save_path = os.path.join("data", "water_data.nc")
-                else:
-                    save_path = os.path.join("data", "water_data.xlsx")
+            dm = DataManager(save_path)
+            dm.sites_registry = []
+            dm.query_examples = []
+            dm.column_metadata = []
+            dm.initialize_chroma()
+            st.session_state.data_manager = dm
+            st.session_state.query_engine = QueryEngine(dm)
+            st.success(f"✅ Loaded {len(dm.df)} samples")
+            st.rerun()
+        except Exception as e:
+            st.error(f"Error loading file: {e}")
+    
+    # Reload button (for when Excel file is updated externally)
+    if st.session_state.data_manager is not None:
+        if st.button("🔄 Reload Data", help="Reload if Excel file was updated"):
+            try:
+                data_path = config.get("data_file", "")
+                if data_path and not os.path.isabs(data_path):
+                    data_path = os.path.join(os.path.dirname(__file__), data_path)
                 
-                with open(save_path, "wb") as f:
-                    f.write(uploaded_file.getvalue())
-                data_path = save_path
-                # Force fresh load by clearing old instances
-                st.session_state.data_manager = None
-                st.session_state.query_engine = None
-            elif os.path.exists(default_file):
-                data_path = default_file
-            elif os.path.exists(default_file.replace('.xlsx', '.nc')):
-                data_path = default_file.replace('.xlsx', '.nc')
-            else:
-                st.error("Please upload a data file (Excel or NetCDF)")
-                data_path = None
-            
-            if data_path:
-                # Always create fresh DataManager (clears metadata cache too)
-                dm = DataManager(data_path)
-                # Clear old metadata to force refresh
-                dm.sites_registry = []
-                dm.query_examples = []
-                dm.column_metadata = []
-                dm.initialize_chroma()
-                st.session_state.data_manager = dm
-                st.session_state.query_engine = QueryEngine(dm)
-                file_type = "NetCDF" if data_path.endswith('.nc') else "Excel"
-                st.success(f"✅ Loaded {len(dm.df)} samples from {file_type}")
+                if data_path and os.path.exists(data_path):
+                    dm = DataManager(data_path)
+                    dm.sites_registry = []
+                    dm.query_examples = []
+                    dm.column_metadata = []
+                    dm.initialize_chroma()
+                    st.session_state.data_manager = dm
+                    st.session_state.query_engine = QueryEngine(dm)
+                    st.success(f"✅ Reloaded {len(dm.df)} samples")
+                    st.rerun()
+                else:
+                    st.error("Data file not found")
         except Exception as e:
             st.error(f"Error loading data: {e}")
     

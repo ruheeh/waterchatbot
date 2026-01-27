@@ -24,57 +24,46 @@
 
 **Windows:** Double-click `run_app_windows.bat`
 
-#### ⚠️ Mac Security Warning (First Time Only)
+#### ⚠️ Mac First Time Setup (Required Once)
 
-If Mac shows "cannot be opened because Apple cannot verify":
+Mac blocks downloaded scripts. **Open Terminal** (Cmd+Space, type "Terminal") and run:
 
-1. **Right-click** the file
+```bash
+cd ~/Downloads/waterchatbotproject
+chmod +x run_app_mac.command
+```
+
+Then:
+1. **Right-click** `run_app_mac.command`
 2. Click **Open**
 3. Click **Open** again in the dialog
 
-After this, double-click works normally.
-
-### Step 3: Enter Your Data File Path (First Run Only)
-
-The script will ask:
-```
-Where is your water quality Excel file?
-Enter full path to Excel file: 
+**If double-click still doesn't work, run in Terminal:**
+```bash
+cd ~/Downloads/waterchatbotproject
+bash run_app_mac.command
 ```
 
-Type the full path, for example:
-- Mac: `/Users/jane/Documents/water_data.xlsx`
-- Windows: `C:\Users\jane\Documents\water_data.xlsx`
+### Step 3: Upload Your Data File (First Run Only)
 
-**Done!** The app opens in your browser.
+1. The app opens in your browser
+2. In the sidebar, click **"Browse files"**
+3. Select your Excel file (e.g., `water_data.xlsx`)
+4. Data loads automatically!
+
+Your file is saved - no need to upload again next time.
 
 ---
 
 ## Daily Use
 
-Just double-click `run_app.sh` (Mac) or `run_app.bat` (Windows).
+Just double-click `run_app_mac.command` (Mac) or `run_app_windows.bat` (Windows).
 
-That's it!
-
----
-
-## Changing the Data File Path Later
-
-Open `config.json` in any text editor and change the path:
-
-```json
-{
-  "data_file": "/new/path/to/water_data.xlsx"
-}
-```
+Your data is remembered automatically!
 
 ---
 
 ## Using the App
-
-### Loading Data
-1. Click **"🔄 Load/Reload Data"** in the sidebar
-2. You should see "✅ Loaded XXXX samples"
 
 ### Asking Questions
 
@@ -99,28 +88,23 @@ Just type natural questions like:
 
 ## Updating the Data File
 
-When new monthly data is added to the Excel file:
-1. Just click **"🔄 Load/Reload Data"** again
-2. The app will load the updated data
+**When monthly data is added to Excel:**
 
-No need to restart anything!
+**Option 1:** Upload the updated file again in the browser
+
+**Option 2:** Click **"🔄 Reload Data"** if the file was updated in the same location
 
 ---
 
 ## Troubleshooting
 
-### "File not found" error
-- Check the path in `config.json` is correct
-- Make sure the file exists at that location
-- On Windows, use double backslashes: `C:\\Users\\...`
-
 ### App won't start
-- Make sure no other app is using port 8501
+- Make sure Python is installed
 - Try restarting your computer
 
-### Data not updating
-- Click **"🔄 Load/Reload Data"** button
-- Check if Excel file was actually saved
+### Data not loading
+- Make sure you uploaded a valid Excel file
+- Check that it has the "FieldData" sheet
 
 ### Browser shows blank page
 - Wait a few seconds, the app takes time to start
@@ -140,9 +124,9 @@ If you have issues:
 ## What the App Does (Simple Explanation)
 
 ```
-Your Excel file
+Upload Excel file (once)
       ↓
-   Load Data
+  App remembers it
       ↓
   Ask Question ──→ "coldest january water temp?"
       ↓
@@ -155,4 +139,4 @@ App understands ──→ Finds: january + coldest + water temp
 
 ---
 
-*No Python knowledge needed! Just edit config.json and double-click to run.*
+*No Python knowledge needed! Just double-click and use the browser.*

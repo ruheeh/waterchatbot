@@ -3,7 +3,7 @@
 # 💧 Water Quality Chatbot - Mac Setup & Run
 # ================================================
 # Just double-click this file to run!
-# First run will install everything automatically.
+# First run will install packages automatically.
 #
 # ⚠️ FIRST TIME SECURITY NOTE:
 # If Mac shows "cannot be opened" warning:
@@ -50,32 +50,6 @@ if ! python3 -c "import streamlit" 2>/dev/null; then
 else
     echo "   ✅ All packages ready"
 fi
-
-# Check if config.json exists, if not create it
-if [ ! -f "config.json" ]; then
-    echo ""
-    echo "⚙️  First time setup - need to configure data file path"
-    echo ""
-    echo "Where is your water quality Excel file?"
-    echo "(Example: /Users/yourname/Documents/water_data.xlsx)"
-    echo ""
-    read -p "Enter full path to Excel file: " datapath
-    
-    # Create config.json
-    cat > config.json << EOF
-{
-  "data_file": "$datapath",
-  "export_folder": "./data"
-}
-EOF
-    echo ""
-    echo "✅ Configuration saved to config.json"
-    echo "   You can edit this file anytime to change the path."
-fi
-
-# Show current config
-echo ""
-echo "📁 Data file: $(python3 -c "import json; print(json.load(open('config.json'))['data_file'])" 2>/dev/null || echo "config.json")"
 
 # Create data folder if needed
 mkdir -p data

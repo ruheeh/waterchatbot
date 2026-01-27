@@ -29,7 +29,7 @@
 Mac blocks downloaded scripts. **Open Terminal** (Cmd+Space, type "Terminal") and run:
 
 ```bash
-cd ~/Downloads/waterchatbotproject
+cd ~/Downloads/waterchatbot-main
 chmod +x run_app_mac.command
 ```
 

@@ -180,8 +180,8 @@ with st.sidebar:
                     st.rerun()
                 else:
                     st.error("Data file not found")
-        except Exception as e:
-            st.error(f"Error loading data: {e}")
+            except Exception as e:
+                st.error(f"Error loading data: {e}")
     
     st.markdown("---")
     

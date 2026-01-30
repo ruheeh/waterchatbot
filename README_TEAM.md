@@ -1,4 +1,4 @@
-# 💧 Water Quality Chatbot - Team User Guide
+# 💧 Sawkill Water Chatbot - Team User Guide
 
 **Just double-click to run! Everything installs automatically.**
 

@@ -1,4 +1,4 @@
-# 💧 Water Quality Data Chatbot (Free Version)
+# 💧 Sawkill Water Chatbot (Free Version)
 
 A simple chatbot for querying water monitoring data using natural language. **Runs completely offline with no API costs!**
 

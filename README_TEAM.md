@@ -18,7 +18,9 @@
 2. Download Python 3.9 or newer
 3. Run installer - **☑️ CHECK "Add Python to PATH"** (important!)
 
-### Step 2: Run the App
+### Step 2: Download the release 1.0
+
+### Step 3: Run the App
 
 **Mac:** Double-click `run_app_mac.command`
 
@@ -44,7 +46,7 @@ cd ~/Downloads/waterchatbotproject
 bash run_app_mac.command
 ```
 
-### Step 3: Upload Your Data File (First Run Only)
+### Step 4: Upload Your Data File (First Run Only)
 
 1. The app opens in your browser
 2. In the sidebar, click **"Browse files"**
